@@ -43,7 +43,7 @@ public class RecruitController {
 	 * 查询最新职位
 	 * @return
 	 */
-	@RequestMapping(value = "/search/recommend",method = RequestMethod.GET)
+	@RequestMapping(value = "/search/newlist",method = RequestMethod.GET)
 	public Result newlist(){
 		return new Result(true,StatusCode.OK,"查询成功",recruitService.newlist());
 	}
