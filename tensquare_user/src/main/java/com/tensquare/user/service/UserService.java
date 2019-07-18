@@ -1,9 +1,6 @@
 package com.tensquare.user.service;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -179,11 +176,47 @@ public class UserService {
 
     }
 
+    /**
+     * 发送短信验证码
+     *
+     * @param mobile
+     */
     public void sendSms(String mobile) {
         // 生成6位验证码
-        String checkcode = RandomStringUtils.random(6);
+        String checkcode = RandomStringUtils.random(6,false,true);
+        // 缓存存一份
+        redisTemplate.opsForValue().set("smscode_" + mobile, checkcode, 6, TimeUnit.HOURS);
+        // 给用户发一份
+        Map<String, String> map = new HashMap<>();
+        map.put("mobile", mobile);
+        map.put("checkcode", checkcode);
+        rabbitTemplate.convertAndSend("sms", map);
+        System.out.println("验证码：" + checkcode);
+    }
 
-        redisTemplate.opsForValue().set("checkcode_"+mobile,checkcode,6,TimeUnit.HOURS);
-
+    /**
+     * 增加
+     *
+     * @param user 用户
+     * @param code 用户填写的验证码
+     */
+    public void add(User user, String code) {
+        //判断验证码是否正确
+        String syscode = (String) redisTemplate.opsForValue().get("smscode_" + user.getMobile());
+        //提取系统正确的验证码
+        if (syscode == null) {
+            throw new RuntimeException("请点击获取短信验证码");
+        }
+        if (!syscode.equals(code)) {
+            throw new RuntimeException("验证码输入不正确");
+        }
+        user.setId(idWorker.nextId() + "");
+        user.setFollowcount(0);//关注数
+        user.setFanscount(0);//粉丝数
+        user.setOnline(0L);//在线时长
+        user.setRegdate(new Date());//注册日期
+        user.setUpdatedate(new Date());//更新日期
+        user.setLastdate(new Date());//最后登陆日期
+        userDao.save(user);
     }
 }
