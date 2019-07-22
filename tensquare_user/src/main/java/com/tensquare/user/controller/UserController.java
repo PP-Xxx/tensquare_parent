@@ -18,6 +18,9 @@ import com.tensquare.user.service.UserService;
 import entity.PageResult;
 import entity.Result;
 import entity.StatusCode;
+import util.JwtUtil;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * 控制器层
@@ -32,6 +35,19 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    /**
+     * 用户登陆
+     * @param user
+     * @return
+     */
+    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    public Result login(@RequestBody User user){
+        User userLogin = userService.login(user);
+        if(userLogin == null){
+            return new Result(false,StatusCode.LOGINERROR,"登陆失败");
+        }
+        return new Result(true,StatusCode.OK,"登陆成功");
+    }
 
     /**
      * 用户注册

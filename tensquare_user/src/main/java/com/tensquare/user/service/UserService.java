@@ -9,7 +9,9 @@ import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Selection;
+import javax.servlet.http.HttpServletRequest;
 
+import io.jsonwebtoken.Claims;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +20,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import util.IdWorker;
 
 import com.tensquare.user.dao.UserDao;
 import com.tensquare.user.pojo.User;
+import util.JwtUtil;
 
 /**
  * 服务层
@@ -44,6 +48,15 @@ public class UserService {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Autowired
+    private HttpServletRequest request;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     /**
      * 查询全部列表
@@ -98,6 +111,7 @@ public class UserService {
      */
     public void add(User user) {
         user.setId(idWorker.nextId() + "");
+
         userDao.save(user);
     }
 
@@ -112,10 +126,27 @@ public class UserService {
 
     /**
      * 删除
-     *
+     * 前后端约定：前端请求微服务时需要添加头信息Authorization ,内容为Bearer+空格+token
      * @param id
      */
     public void deleteById(String id) {
+        String header = request.getHeader("Authorization");
+        if(header ==null || "".equals(header)){
+            throw new RuntimeException("权限不足");
+        }
+        if(!header.startsWith("Bearer ")){
+            throw new RuntimeException("权限不足");
+        }
+        String token = header.substring(7);
+        try {
+            Claims claims = jwtUtil.parseJWT(token);
+            String roles = (String) claims.get("roles");
+            if(roles==null || !"admin".equals(roles)){
+                throw new RuntimeException("权限不足");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("权限不足");
+        }
         userDao.deleteById(id);
     }
 
@@ -210,6 +241,7 @@ public class UserService {
         if (!syscode.equals(code)) {
             throw new RuntimeException("验证码输入不正确");
         }
+        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         user.setId(idWorker.nextId() + "");
         user.setFollowcount(0);//关注数
         user.setFanscount(0);//粉丝数
@@ -218,5 +250,18 @@ public class UserService {
         user.setUpdatedate(new Date());//更新日期
         user.setLastdate(new Date());//最后登陆日期
         userDao.save(user);
+    }
+
+    /**
+     * 用户登陆
+     * @param user
+     * @return
+     */
+    public User login(User user) {
+        User userLogin = userDao.findByMobile(user.getMobile());
+        if(userLogin!=null && bCryptPasswordEncoder.matches(user.getPassword(),userLogin.getPassword())){
+            return userLogin;
+        }
+        return null;
     }
 }
