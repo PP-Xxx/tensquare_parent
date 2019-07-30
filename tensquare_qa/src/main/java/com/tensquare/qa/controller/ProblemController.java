@@ -3,9 +3,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.tensquare.qa.client.BaseClient;
-import com.tensquare.qa.client.LabelClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;

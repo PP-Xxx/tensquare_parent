@@ -251,4 +251,15 @@ public class UserService {
         }
         return null;
     }
+
+    /**
+     * 更新粉丝和关注
+     * @param x
+     * @param userid
+     * @param friendid
+     */
+    public void updatefanscountandfollowcount(int x, String userid, String friendid) {
+        userDao.updateFanscount(x,friendid);
+        userDao.updateFollowcount(x,userid);
+    }
 }
