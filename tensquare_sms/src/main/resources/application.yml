@@ -1,0 +1,14 @@
+server:
+  port: 9009
+spring:
+  application:
+    name: tensquare-sms
+  rabbitmq:
+    host: 192.168.89.128
+aliyun:
+  sms:
+   accessKeyId: LTAIcJN1xt9UI5Y3
+   accessKeySecret: LQmcY1IU4xVOU0UDiifdW5oxrRXnjV
+   template_code: SMS_151925384
+   sign_name: lsky
+
