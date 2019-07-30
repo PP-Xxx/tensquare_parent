@@ -5,9 +5,3 @@ spring:
     name: tensquare-sms
   rabbitmq:
     host: 192.168.89.128
-aliyun:
-  sms:
-    accessKeyId: LTAIXsoS24SG1k2G
-    accessKeySecret: WBn0LxJ0dkMaBSl8pJJbRpzsJacuzS
-    template_code: SMS_170836161
-    sign_name: tensquare
